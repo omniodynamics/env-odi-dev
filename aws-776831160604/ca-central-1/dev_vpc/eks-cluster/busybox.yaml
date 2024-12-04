@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: botkit
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: botkit
+  template:
+    metadata:
+      labels:
+        app: botkit
+    spec:
+      serviceAccountName: s3admin
+      containers:
+      - name: botkit
+        image: debian
+        command: ["/bin/bash", "-c"]
+        args:
+        - >
+          apt-get update &&
+          apt-get install -y bash curl vim jq &&
+          apt-get install -y awscli &&
+          apt-get clean &&
+          rm -rf /var/lib/apt/lists/* &&
+          echo "Tools installed. Running bash..." &&
+          /bin/bash
+        tty: true
+        stdin: true
+        volumeMounts:
+        - name: nginx-html
+          mountPath: /mnt/nginx-html
+      volumes:
+      - name: nginx-html
+        persistentVolumeClaim:
+          claimName: nginx-html-nginx-statefulset-0 

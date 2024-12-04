@@ -1,0 +1,59 @@
+# json-server-configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: json-server-data
+data:
+  data.json: |
+    {
+      "posts": [
+        { "id": 1, "body": "foo" },
+        { "id": 2, "body": "bar" }
+      ],
+      "comments": [
+        { "id": 1, "body": "baz", "postId": 1 },
+        { "id": 2, "body": "qux", "postId": 2 }
+      ]
+    }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: json-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: json-server
+  template:
+    metadata:
+      labels:
+        app: json-server
+    spec:
+      containers:
+      - name: json-server
+        image: clue/json-server
+        ports:
+        - containerPort: 3000
+        volumeMounts:
+        - name: data-volume
+          mountPath: /data
+        command: ["json-server"]
+        args: ["/data/data.json"]
+      volumes:
+      - name: data-volume
+        configMap:
+          name: json-server-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: json-server-service
+spec:
+  selector:
+    app: json-server
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 3000
+  type: LoadBalancer
